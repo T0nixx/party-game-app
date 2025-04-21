@@ -61,5 +61,8 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.okhttp)
+
     implementation(project(":shared"))
 }

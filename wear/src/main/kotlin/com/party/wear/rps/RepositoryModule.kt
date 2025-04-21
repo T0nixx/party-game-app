@@ -1,7 +1,6 @@
-package com.party.wear.rps.di
+package com.party.wear.rps
 
 import com.party.shared.rps.repository.RpsRepository
-import com.party.wear.rps.data.repository.RpsRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -1,4 +1,4 @@
-package com.party.wear.rps.theme
+package com.party.wear.theme
 
 import androidx.compose.runtime.Composable
 import androidx.wear.compose.material.MaterialTheme

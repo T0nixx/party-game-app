@@ -1,4 +1,5 @@
-package com.party.wear.rps.ui
+// ✅ RpsScreen.kt
+package com.party.wear.rps
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,22 +26,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
-import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.Text
 import com.party.shared.rps.model.RpsChoice
-import com.party.wear.rps.viewmodel.RpsViewModel
+import com.party.shared.rps.model.RpsResult
+import com.party.wear.connection.GameConnectionViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-@Preview
-fun RpsScreen(viewModel: RpsViewModel = hiltViewModel()) {
-    val uiState by viewModel.uiState.collectAsState()
+fun RpsScreen() {
+    val rpsViewModel: RpsViewModel = hiltViewModel()
+    val connectionViewModel: GameConnectionViewModel = hiltViewModel()
+    val uiState by rpsViewModel.uiState.collectAsState()
     var showResultDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(true) {
+        connectionViewModel.messageFlow.collectLatest { message ->
+            if (message.type == "result") {
+                val map = message.payload as? Map<*, *> ?: return@collectLatest
+                val result = RpsResult(
+                    userChoice = RpsChoice.valueOf(map["userChoice"].toString()),
+                    isWinner = map["isWinner"] as Boolean
+                )
+                rpsViewModel.setResult(result)
+            }
+        }
+    }
 
     LaunchedEffect(uiState.result, uiState.isLoading) {
         showResultDialog = uiState.result != null && !uiState.isLoading
@@ -67,9 +83,12 @@ fun RpsScreen(viewModel: RpsViewModel = hiltViewModel()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 RpsChoice.entries.forEach { choice ->
                     Button(
-                        onClick = { viewModel.onChoice(choice) },
+                        onClick = {
+                            rpsViewModel.onChoice(choice)
+                            connectionViewModel.send("submit", mapOf("choice" to choice.name))
+                        },
                         shape = RoundedCornerShape(percent = 50),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
                             .height(48.dp)
@@ -84,7 +103,7 @@ fun RpsScreen(viewModel: RpsViewModel = hiltViewModel()) {
             }
 
             if (uiState.isLoading) {
-                CircularProgressIndicator(indicatorColor = Color.White)
+                CircularProgressIndicator(color = Color.White)
             } else {
                 Spacer(modifier = Modifier.height(48.dp))
             }
@@ -110,11 +129,6 @@ fun RpsScreen(viewModel: RpsViewModel = hiltViewModel()) {
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "상대: ${uiState.result!!.winningChoice.name}",
-                        color = Color.White
-                    )
-                    Spacer(Modifier.height(12.dp))
                     Button(onClick = { showResultDialog = false }) {
                         Text("확인")
                     }

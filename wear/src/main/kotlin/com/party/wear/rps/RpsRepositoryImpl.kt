@@ -1,4 +1,4 @@
-package com.party.wear.rps.data.repository
+package com.party.wear.rps
 
 import com.party.shared.rps.model.RpsChoice
 import com.party.shared.rps.model.RpsResult
@@ -18,6 +18,6 @@ class RpsRepositoryImpl @Inject constructor() : RpsRepository {
             RpsChoice.SCISSORS -> winning == RpsChoice.PAPER
         }
 
-        return RpsResult(winningChoice = winning, isWinner = isWinner)
+        return RpsResult(userChoice = winning, isWinner = isWinner)
     }
 }
